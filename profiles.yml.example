@@ -1,0 +1,11 @@
+# Copie para C:\Users\<seu-usuario>\.dbt\profiles.yml (fora do repositório)
+gastos_publicos:
+  target: dev
+  outputs:
+    dev:
+      type: bigquery
+      method: oauth               # após: gcloud auth application-default login
+      project: london-crime-analysis-499415
+      dataset: dbt_gastos_publicos
+      location: US                # use a MESMA localização do dataset de origem
+      threads: 4

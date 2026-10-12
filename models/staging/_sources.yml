@@ -1,0 +1,15 @@
+version: 2
+
+sources:
+  - name: gastos_publicos
+    description: >
+      Execução orçamentária federal de agosto/2026 (Portal da Transparência),
+      já tratada em Python e carregada no BigQuery na fase 4 do projeto final da EBAC.
+    database: london-crime-analysis-499415
+    schema: gastos_publicos_agosto_2026
+    tables:
+      - name: execucao_orcamentaria
+        description: "Tabela plana com um registro por empenho (205.378 linhas, 15 colunas)."
+        columns:
+          - name: codigo_empenho
+            description: "Identificador do empenho."

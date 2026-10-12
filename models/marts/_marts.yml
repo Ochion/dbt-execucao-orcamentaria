@@ -1,0 +1,150 @@
+version: 2
+
+models:
+  - name: fct_execucao
+    description: >
+      Tabela fato da execução orçamentária. Grão: um registro por empenho.
+      Medidas: valor empenhado, liquidado e pago (R$).
+    columns:
+      - name: codigo_empenho
+        description: "Identificador do empenho (chave do grão)."
+        data_tests: [unique, not_null]
+      - name: data_key
+        description: "Chave da data de emissão (yyyymmdd) para dim_data."
+        data_tests:
+          - not_null:
+              config:
+                severity: warn
+          - relationships:
+              arguments:
+                to: ref('dim_data')
+                field: data_key
+              config:
+                severity: warn
+      - name: orgao_key
+        description: "Chave do órgão para dim_orgao."
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_orgao')
+                field: orgao_key
+      - name: favorecido_key
+        description: "Chave do favorecido para dim_favorecido."
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_favorecido')
+                field: favorecido_key
+      - name: despesa_key
+        description: "Chave da classificação da despesa para dim_despesa."
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_despesa')
+                field: despesa_key
+      - name: situacao_key
+        description: "Chave da situação da execução para dim_situacao."
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_situacao')
+                field: situacao_key
+      - name: estorno_cancelamento
+        description: "Indicador de estorno ou cancelamento (coluna derivada na fase de tratamento)."
+      - name: valor_original_empenho
+        description: "Valor original do empenho (R$)."
+      - name: valor_liquidado
+        description: "Valor liquidado do empenho (R$)."
+      - name: valor_pago
+        description: "Valor efetivamente pago (R$)."
+      - name: percentual_liquidado
+        description: "Valor liquidado dividido pelo valor original do empenho."
+      - name: percentual_pago
+        description: "Valor pago dividido pelo valor original do empenho."
+
+  - name: dim_orgao
+    description: "Dimensão de órgãos. Grão: combinação de órgão superior e órgão."
+    columns:
+      - name: orgao_key
+        description: "Chave substituta (MD5 de órgão superior + órgão)."
+        data_tests: [unique, not_null]
+      - name: orgao_superior
+        description: "Órgão superior (ex.: ministério)."
+      - name: orgao
+        description: "Órgão vinculado."
+
+  - name: dim_favorecido
+    description: "Dimensão de favorecidos (quem recebe o pagamento). Grão: favorecido."
+    columns:
+      - name: favorecido_key
+        description: "Chave substituta (MD5 do nome do favorecido)."
+        data_tests: [unique, not_null]
+      - name: favorecido
+        description: "Nome do favorecido."
+
+  - name: dim_despesa
+    description: "Dimensão da classificação da despesa. Grão: categoria + elemento + função."
+    columns:
+      - name: despesa_key
+        description: "Chave substituta (MD5 de categoria + elemento + função)."
+        data_tests: [unique, not_null]
+      - name: categoria_despesa
+        description: "Categoria de despesa (ex.: Despesas Correntes, Despesas de Capital)."
+      - name: elemento_despesa
+        description: "Elemento de despesa (ex.: Material de Consumo)."
+      - name: funcao
+        description: "Função orçamentária."
+
+  - name: dim_situacao
+    description: "Dimensão da situação da execução do empenho. Grão: situação."
+    columns:
+      - name: situacao_key
+        description: "Chave substituta (MD5 do nome da situação)."
+        data_tests: [unique, not_null]
+      - name: situacao_execucao
+        description: "Situação da execução do empenho."
+        # Rode o SELECT DISTINCT do passo a passo e ajuste esta lista se os textos forem diferentes.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values:
+                  - "Empenhado, Sem Execução"
+                  - "Liquidado, Aguardando Pagamento"
+                  - "Pago Parcialmente"
+                  - "Pago Integralmente"
+                  - "Estorno/Cancelamento"
+
+  - name: dim_data
+    description: "Dimensão de calendário, do primeiro ao último dia com empenho emitido."
+    columns:
+      - name: data_key
+        description: "Chave da data no formato yyyymmdd."
+        data_tests: [unique, not_null]
+      - name: data
+        description: "Data."
+      - name: ano
+        description: "Ano."
+      - name: mes
+        description: "Mês (1 a 12)."
+      - name: dia
+        description: "Dia do mês."
+      - name: dia_semana
+        description: "Dia da semana (1 = domingo, 7 = sábado)."
+      - name: eh_fim_de_semana
+        description: "Verdadeiro para sábado e domingo."
+
+exposures:
+  - name: dashboard_execucao_orcamentaria
+    label: "Dashboard de execução orçamentária (Looker Studio)"
+    type: dashboard
+    maturity: high
+    url: https://datastudio.google.com/reporting/12a3e0c7-f740-4e62-9580-958aa2e74560
+    description: "Dashboard interativo da execução orçamentária de agosto/2026, alimentado pela tabela plana de origem."
+    depends_on:
+      - source('gastos_publicos', 'execucao_orcamentaria')
+    owner:
+      name: Johan Manochio

@@ -1,0 +1,14 @@
+version: 2
+
+models:
+  - name: stg_execucao_orcamentaria
+    description: >
+      Execução orçamentária limpa e tipada, um registro por empenho. Textos vazios viram
+      "Não informado", valores ausentes viram 0 e as chaves das dimensões são calculadas
+      com hash MD5 dos atributos naturais.
+    columns:
+      - name: codigo_empenho
+        description: "Identificador do empenho (grão da tabela)."
+        data_tests:
+          - unique
+          - not_null
