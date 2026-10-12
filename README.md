@@ -22,31 +22,71 @@ erDiagram
     fct_execucao }o--|| dim_situacao : situacao_key
     fct_execucao {
         string codigo_empenho PK
+        int data_key FK
+        string orgao_key FK
+        string favorecido_key FK
+        string despesa_key FK
+        string situacao_key FK
         numeric valor_original_empenho
         numeric valor_liquidado
         numeric valor_pago
         float percentual_liquidado
         float percentual_pago
     }
-    dim_orgao { string orgao_key PK }
-    dim_favorecido { string favorecido_key PK }
-    dim_despesa { string despesa_key PK }
-    dim_situacao { string situacao_key PK }
-    dim_data { int data_key PK }
+    dim_orgao {
+        string orgao_key PK
+        string orgao_superior
+        string orgao
+    }
+    dim_favorecido {
+        string favorecido_key PK
+        string favorecido
+    }
+    dim_despesa {
+        string despesa_key PK
+        string categoria_despesa
+        string elemento_despesa
+        string funcao
+    }
+    dim_situacao {
+        string situacao_key PK
+        string situacao_execucao
+    }
+    dim_data {
+        int data_key PK
+        date data
+        int ano
+        int mes
+        int dia
+    }
 ```
 
 **Grão da fato:** um registro por empenho.
 
+| Tabela | Linhas |
+|---|---|
+| `fct_execucao` | 205.378 |
+| `dim_favorecido` | ~56,9 mil |
+| `dim_despesa` | 739 |
+| `dim_orgao` | 209 |
+| `dim_data` | 31 |
+| `dim_situacao` | 5 |
+
 ## Resultado
-<!-- Preencha com os números reais depois de rodar `dbt build`. -->
-- Modelos criados: 1 staging, 1 fato e 5 dimensões.
-- Testes executados: `__` aprovados, `__` com aviso, `__` falhas.
-- Linhas na fato: `__` (igual à staging).
+- `dbt build` concluído com **34 de 34 etapas aprovadas**: 7 modelos (1 staging, 1 fato e 5 dimensões) e 27 testes de dados.
+- A fato tem o mesmo número de linhas e o mesmo total pago da staging, validados por dois testes de reconciliação.
+- Na primeira execução, o teste de valores aceitos acusou uma divergência nos textos da situação da execução (vírgulas e maiúsculas que eu não esperava). Corrigi o teste e o pipeline passou por completo.
+
+### Linhagem dos modelos
+![Linhagem dos modelos](linhagem.png)
+
+### Colunas da tabela fato
+![Colunas da tabela fato](colunas_fato.png)
 
 ## Como executar
 ```bash
-python -m venv .venv
-.venv\Scripts\activate
+python3 -m venv .venv
+source .venv/bin/activate
 pip install -r requirements.txt
 gcloud auth application-default login
 # copie profiles.yml.example para ~/.dbt/profiles.yml e ajuste
@@ -55,6 +95,7 @@ dbt build
 dbt docs generate
 dbt docs serve
 ```
+Rodei o projeto no Google Cloud Shell. No Windows, uma política de controle de aplicativos pode bloquear bibliotecas do adaptador do BigQuery.
 
 ## Stack
 dbt Core, BigQuery, SQL, Git.
